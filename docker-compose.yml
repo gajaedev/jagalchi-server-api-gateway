@@ -1,0 +1,17 @@
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - jagalchi-network
+
+networks:
+  jagalchi-network:
+    driver: bridge
+
