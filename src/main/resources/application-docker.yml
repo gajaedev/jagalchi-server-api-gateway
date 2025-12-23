@@ -12,4 +12,18 @@ spring:
 server:
   port: 8080
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
