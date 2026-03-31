@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.autoconfigure.LifecycleMvcEndpointAutoConfiguration
+      - org.springframework.cloud.autoconfigure.RefreshAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration
+      - org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration
+      - org.springframework.cloud.client.loadbalancer.reactive.SimpleReactiveLoadBalancerAutoConfiguration
+  cloud:
+    gateway:
+      routes:
+        # User Service Routes
+        - id: user-service
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/users/**
+          filters:
+            - RewritePath=/users/(?<segment>.*), /$\{segment}
+
+        # Node Service Routes (REST APIs)
+        - id: node-service-rest
+          uri: ${NODE_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/node/**
+          filters:
+            - RewritePath=/node/(?<segment>.*), /$\{segment}
+
+        # Node Service Routes (WebSocket)
+        - id: node-service-websocket
+          uri: ${NODE_SERVICE_URL:ws://localhost:8082}
+          predicates:
+            - Path=/ws/**
+          filters:
+            - RewritePath=/ws/(?<segment>.*), /$\{segment}
+
+      # CORS 설정
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+            maxAge: 3600
+
+server:
+  port: 8080
+
+# JWT Secret (User 모듈과 동일한 값 사용)
+jwt:
+  secret: ${SECRET_KEY:your-secret-key-must-be-at-least-256-bits-long-for-hs512-algorithm}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    gajeman.jagalchi: INFO
+    org.springframework.cloud.gateway: DEBUG
+
