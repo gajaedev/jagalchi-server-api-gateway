@@ -5,28 +5,28 @@ spring:
     gateway:
       routes:
         - id: user-service
-          uri: http://user-service:8081
+          uri: ${USER_SERVICE_URL:http://user.jagalchi.local:8081}
           predicates:
             - Path=/users/**
           filters:
             - RewritePath=/users/(?<segment>.*), /${segment}
 
         - id: api-to-node
-          uri: http://jagalchi-node:8080
+          uri: ${NODE_SERVICE_URL:http://node.jagalchi.local:8082}
           predicates:
             - Path=/api/**
           filters:
             - RewritePath=/api/(?<segment>.*), /api/${segment}
 
         - id: node-service-rest
-          uri: http://jagalchi-node:8080
+          uri: ${NODE_SERVICE_URL:http://node.jagalchi.local:8082}
           predicates:
             - Path=/node/**
           filters:
             - RewritePath=/node/(?<segment>.*), /${segment}
 
         - id: node-service-websocket
-          uri: ws://jagalchi-node:8080
+          uri: ${NODE_WS_URL:ws://node.jagalchi.local:8082}
           predicates:
             - Path=/ws/**
           filters:

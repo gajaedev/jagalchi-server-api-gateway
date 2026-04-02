@@ -24,19 +24,27 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p artifacts
-          cp api-gateway/build/libs/*.jar artifacts/ 2>/dev/null || cp build/libs/*.jar artifacts/ 2>/dev/null || true
+          cp build/libs/*.jar artifacts/ 2>/dev/null || true
+          # include module-local Dockerfile and docker-compose (assume present in module repo)
+          cp Dockerfile artifacts/Dockerfile 2>/dev/null || true
+          cp compose.yml artifacts/docker-compose.yml 2>/dev/null || true
           cat > artifacts/.env <<EOF
-RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}
-RABBITMQ_PORT=${{ secrets.RABBITMQ_PORT }}
-RABBITMQ_USER=${{ secrets.RABBITMQ_USER }}
-RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}
-MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-MYSQL_USER=${{ secrets.MYSQL_USER }}
-MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-REDIS_HOST=${{ secrets.REDIS_HOST }}
-REDIS_PORT=${{ secrets.REDIS_PORT }}
-EOF
+          RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}
+          RABBITMQ_PORT=${{ secrets.RABBITMQ_PORT }}
+          RABBITMQ_USER=${{ secrets.RABBITMQ_USER }}
+          RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}
+          MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER=${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+          REDIS_HOST=${{ secrets.REDIS_HOST }}
+          REDIS_PORT=${{ secrets.REDIS_PORT }}
+          USER_SERVICE_URL=${{ secrets.USER_SERVICE_URL }}
+          GATEWAY_SERVICE_URL=${{ secrets.GATEWAY_SERVICE_URL }}
+          NODE_SERVICE_URL=${{ secrets.NODE_SERVICE_URL }}
+          NODE_WS_URL=${{ secrets.NODE_WS_URL }}
+          ROADMAP_SERVICE_URL=${{ secrets.ROADMAP_SERVICE_URL }}
+          EOF
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.6.0

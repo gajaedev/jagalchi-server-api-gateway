@@ -16,7 +16,7 @@ spring:
       routes:
         # User Service Routes
         - id: user-service
-          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          uri: ${USER_SERVICE_URL:http://user.jagalchi.local:8081}
           predicates:
             - Path=/users/**
           filters:
@@ -24,7 +24,7 @@ spring:
 
         # Node Service Routes (REST APIs)
         - id: node-service-rest
-          uri: ${NODE_SERVICE_URL:http://localhost:8082}
+          uri: ${NODE_SERVICE_URL:http://node.jagalchi.local:8082}
           predicates:
             - Path=/node/**
           filters:
@@ -32,7 +32,7 @@ spring:
 
         # Node Service Routes (WebSocket)
         - id: node-service-websocket
-          uri: ${NODE_SERVICE_URL:ws://localhost:8082}
+          uri: ${NODE_SERVICE_URL:ws://node.jagalchi.local:8082}
           predicates:
             - Path=/ws/**
           filters:
@@ -43,7 +43,7 @@ spring:
         cors-configurations:
           '[/**]':
             allowedOrigins:
-              - "http://localhost:3000"
+              - "http://localhost:3000"  # frontend origin (local dev) - leave as-is
               - "http://localhost:5173"
             allowedMethods:
               - GET
