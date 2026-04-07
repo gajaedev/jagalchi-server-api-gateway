@@ -19,6 +19,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
 /**
  * WebSocket 핸드쉐이크 전용 필터
@@ -77,13 +78,13 @@ public class WebSocketHandshakeFilter implements GlobalFilter, Ordered {
             String tokenType = claims.get("type", String.class);
             if (!"ACCESS_TOKEN".equals(tokenType)) {
                 log.warn("WebSocket handshake invalid token type: {}", tokenType);
-                return onError(exchange, "Invalid token type", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "INVALID_TOKEN", "Invalid token type", HttpStatus.UNAUTHORIZED);
             }
 
             Long userId = claims.get("id", Long.class);
             String role = claims.get("role", String.class);
             if (userId == null || role == null) {
-                return onError(exchange, "Invalid token claims", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "INVALID_TOKEN", "Invalid token claims", HttpStatus.UNAUTHORIZED);
             }
 
             String mappedRole = switch (role.toUpperCase()) {
@@ -123,18 +124,20 @@ public class WebSocketHandshakeFilter implements GlobalFilter, Ordered {
 
         } catch (ExpiredJwtException e) {
             log.warn("Expired JWT token for WebSocket handshake");
-            return onError(exchange, "Token has expired", HttpStatus.UNAUTHORIZED);
+            return onError(exchange, "TOKEN_EXPIRED", "Token has expired", HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             log.error("WebSocket handshake JWT validation failed: {}", e.getMessage());
-            return onError(exchange, "Invalid token", HttpStatus.UNAUTHORIZED);
+            return onError(exchange, "INVALID_TOKEN", "Invalid token", HttpStatus.UNAUTHORIZED);
         }
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
+    private Mono<Void> onError(ServerWebExchange exchange, String code, String message, HttpStatus status) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(status);
         response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json");
-        String errorJson = String.format("{\"error\":\"%s\",\"message\":\"%s\"}", status.getReasonPhrase(), message);
+        String errorJson = String.format(
+                "{\"error\":{\"code\":\"%s\",\"message\":\"%s\",\"details\":{},\"timestamp\":\"%s\"}}",
+                code, message, Instant.now().toString());
         return response.writeWith(Mono.just(response.bufferFactory().wrap(errorJson.getBytes(StandardCharsets.UTF_8))));
     }
 

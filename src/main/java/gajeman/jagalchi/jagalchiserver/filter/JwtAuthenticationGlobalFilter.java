@@ -19,6 +19,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
 /**
  * JWT 인증 GlobalFilter
@@ -69,7 +70,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
                 log.debug("Using access_token query param for authentication for path: {}", path);
             } else {
                 log.warn("Missing or invalid Authorization header for path: {}", path);
-                return onError(exchange, "Authorization header is missing or invalid", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "UNAUTHORIZED", "Authorization header is missing or invalid", HttpStatus.UNAUTHORIZED);
             }
         }
 
@@ -81,7 +82,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
             String tokenType = claims.get("type", String.class);
             if (!"ACCESS_TOKEN".equals(tokenType)) {
                 log.warn("Invalid token type: {}", tokenType);
-                return onError(exchange, "Invalid token type", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "INVALID_TOKEN", "Invalid token type", HttpStatus.UNAUTHORIZED);
             }
 
             // User ID 및 Role 추출
@@ -90,7 +91,7 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
 
             if (userId == null || role == null) {
                 log.warn("Missing user ID or role in token claims");
-                return onError(exchange, "Invalid token claims", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "INVALID_TOKEN", "Invalid token claims", HttpStatus.UNAUTHORIZED);
             }
 
             // Role 매핑 (User 모듈 → Node 모듈)
@@ -135,10 +136,10 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
 
         } catch (ExpiredJwtException e) {
             log.warn("Expired JWT token for path: {}", path);
-            return onError(exchange, "Token has expired", HttpStatus.UNAUTHORIZED);
+            return onError(exchange, "TOKEN_EXPIRED", "Token has expired", HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             log.error("JWT validation failed for path: {}. Error: {}", path, e.getMessage());
-            return onError(exchange, "Invalid token", HttpStatus.UNAUTHORIZED);
+            return onError(exchange, "INVALID_TOKEN", "Invalid token", HttpStatus.UNAUTHORIZED);
         }
     }
 
@@ -193,22 +194,25 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
         if (path.equals("/users")) return true; // signup
         if (path.startsWith("/users/auth/login")) return true;
         if (path.startsWith("/users/auth/refresh")) return true;
+        if (path.startsWith("/users/auth/password-reset")) return true;
+        if (path.startsWith("/users/verification")) return true;
         if (path.startsWith("/users") && path.contains("/oauth2/")) return true;
         if (path.equals("/health") || path.equals("/actuator/health")) return true;
         return false;
     }
 
     /**
-     * 에러 응답 반환
+     * 에러 응답 반환 (공통 에러 포맷)
      */
-    private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus status) {
+    private Mono<Void> onError(ServerWebExchange exchange, String code, String message, HttpStatus status) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(status);
         response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json");
-        
-        String errorJson = String.format("{\"error\":\"%s\",\"message\":\"%s\"}", 
-                status.getReasonPhrase(), message);
-        
+
+        String errorJson = String.format(
+                "{\"error\":{\"code\":\"%s\",\"message\":\"%s\",\"details\":{},\"timestamp\":\"%s\"}}",
+                code, message, Instant.now().toString());
+
         return response.writeWith(Mono.just(response.bufferFactory()
                 .wrap(errorJson.getBytes(StandardCharsets.UTF_8))));
     }
