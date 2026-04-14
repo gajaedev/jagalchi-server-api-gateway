@@ -22,7 +22,12 @@ public class CorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
         // 개발용: 브라우저가 쿠키를 전송할 수 있도록 명시적 origin과 allowCredentials=true 설정
-        config.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:5173"));
+        config.setAllowedOrigins(Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://jagalchi.dev",
+                "https://www.jagalchi.dev"
+        ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);

@@ -45,6 +45,8 @@ spring:
             allowedOrigins:
               - "http://localhost:3000"  # frontend origin (local dev) - leave as-is
               - "http://localhost:5173"
+              - "https://jagalchi.dev"
+              - "https://www.jagalchi.dev"
             allowedMethods:
               - GET
               - POST
@@ -82,4 +84,3 @@ logging:
     root: INFO
     gajeman.jagalchi: INFO
     org.springframework.cloud.gateway: DEBUG
-
