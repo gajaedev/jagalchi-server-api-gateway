@@ -4,7 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -17,6 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -27,9 +28,10 @@ import java.time.Instant;
  * User 모듈의 JWT 토큰을 검증하고, Claims를 추출하여
  * X-User-ID, X-User-Role 헤더로 변환하여 downstream 서비스로 전달
  */
-@Slf4j
 @Component
 public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationGlobalFilter.class);
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -196,7 +198,20 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
         if (path.startsWith("/users/auth/refresh")) return true;
         if (path.startsWith("/users/auth/password-reset")) return true;
         if (path.startsWith("/users/verification")) return true;
+        if (path.equals("/users/health")) return true;
         if (path.startsWith("/users") && path.contains("/oauth2/")) return true;
+        if (path.startsWith("/oauth2/")) return true;
+        if (path.startsWith("/login/oauth2/")) return true;
+        if (path.equals("/node/health")) return true;
+        if (path.equals("/node/stomp/info")) return true;
+        if (path.equals("/roadmap/health")) return true;
+        if (path.equals("/ai/health/") || path.equals("/ai/health")) return true;
+        if (path.equals("/ai/schema/") || path.equals("/ai/schema")) return true;
+        if (path.startsWith("/ai/docs") || path.startsWith("/ai/redoc")) return true;
+        if (path.startsWith("/docs/")) return true;
+        if (path.startsWith("/swagger-ui")) return true;
+        if (path.equals("/swagger-ui.html")) return true;
+        if (path.startsWith("/v3/api-docs")) return true;
         if (path.equals("/health") || path.equals("/actuator/health")) return true;
         return false;
     }

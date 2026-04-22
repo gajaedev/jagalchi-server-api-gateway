@@ -1,15 +1,41 @@
 spring:
   application:
     name: api-gateway
+  data:
+    redis:
+      host: ${GATEWAY_REDIS_HOST:redis}
+      port: ${GATEWAY_REDIS_PORT:6379}
   cloud:
     gateway:
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            key-resolver: "#{@clientKeyResolver}"
+            redis-rate-limiter.replenishRate: 30
+            redis-rate-limiter.burstCapacity: 60
+            redis-rate-limiter.requestedTokens: 1
       routes:
         - id: user-service
           uri: ${USER_SERVICE_URL:http://user.jagalchi.local:8081}
           predicates:
             - Path=/users/**
+
+        - id: user-oauth-authorization
+          uri: ${USER_SERVICE_URL:http://user.jagalchi.local:8081}
+          predicates:
+            - Path=/oauth2/**
+
+        - id: user-oauth-callback
+          uri: ${USER_SERVICE_URL:http://user.jagalchi.local:8081}
+          predicates:
+            - Path=/login/oauth2/**
+
+        - id: node-service-health
+          uri: ${NODE_SERVICE_URL:http://node.jagalchi.local:8082}
+          predicates:
+            - Path=/node/health
           filters:
-            - RewritePath=/users/(?<segment>.*), /${segment}
+            - SetPath=/health
 
         - id: api-to-node
           uri: ${NODE_SERVICE_URL:http://node.jagalchi.local:8082}
@@ -25,12 +51,53 @@ spring:
           filters:
             - RewritePath=/node/(?<segment>.*), /${segment}
 
+        - id: node-service-openapi
+          uri: ${NODE_SERVICE_URL:http://node.jagalchi.local:8082}
+          predicates:
+            - Path=/docs/node/v3/api-docs
+          filters:
+            - SetPath=/v3/api-docs
+
         - id: node-service-websocket
           uri: ${NODE_WS_URL:ws://node.jagalchi.local:8082}
           predicates:
             - Path=/ws/**
           filters:
             - RewritePath=/ws/(?<segment>.*), /${segment}
+
+        - id: roadmap-service-roadmaps
+          uri: ${ROADMAP_SERVICE_URL:http://roadmap:8080}
+          predicates:
+            - Path=/roadmaps/**
+
+        - id: roadmap-service-directories
+          uri: ${ROADMAP_SERVICE_URL:http://roadmap:8080}
+          predicates:
+            - Path=/directories/**
+
+        - id: roadmap-service-notifications
+          uri: ${ROADMAP_SERVICE_URL:http://roadmap:8080}
+          predicates:
+            - Path=/notifications/**
+
+        - id: roadmap-service-health
+          uri: ${ROADMAP_SERVICE_URL:http://roadmap:8080}
+          predicates:
+            - Path=/roadmap/health
+          filters:
+            - SetPath=/health
+
+        - id: roadmap-service-openapi
+          uri: ${ROADMAP_SERVICE_URL:http://roadmap:8080}
+          predicates:
+            - Path=/docs/roadmap/v3/api-docs
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: ai-service
+          uri: ${AI_SERVICE_URL:http://ai:8000}
+          predicates:
+            - Path=/ai/**
 
 server:
   port: 8080
@@ -50,3 +117,18 @@ management:
 
 jwt:
   secret: ${SECRET_KEY:your-secret-key-must-be-at-least-256-bits-long-for-hs512-algorithm}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    config-url: /swagger-config.json
+    disable-swagger-default-url: true
+    urls:
+      - name: user-service
+        url: /docs/user/v3/api-docs
+      - name: node-service
+        url: /docs/node/v3/api-docs
+      - name: roadmap-service
+        url: /docs/roadmap/v3/api-docs
+      - name: ai-service
+        url: /ai/schema/

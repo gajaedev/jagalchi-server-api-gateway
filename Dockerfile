@@ -9,7 +9,7 @@ COPY settings.gradle .
 COPY src src
 
 RUN chmod +x ./gradlew
-RUN ./gradlew bootJar -x test
+RUN ./gradlew bootJar -x test --no-daemon && rm -rf /root/.gradle
 
 FROM eclipse-temurin:25-jre
 
@@ -20,4 +20,3 @@ COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
-

@@ -9,8 +9,10 @@ spring:
       - org.springframework.cloud.autoconfigure.RefreshAutoConfiguration
       - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
       - org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration
+      - org.springframework.cloud.client.discovery.simple.reactive.SimpleReactiveDiscoveryClientAutoConfiguration
       - org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration
       - org.springframework.cloud.client.loadbalancer.reactive.SimpleReactiveLoadBalancerAutoConfiguration
+      - org.springframework.cloud.loadbalancer.config.LoadBalancerBeanPostProcessorAutoConfiguration
   cloud:
     gateway:
       routes:
@@ -19,8 +21,13 @@ spring:
           uri: ${USER_SERVICE_URL:http://user.jagalchi.local:8081}
           predicates:
             - Path=/users/**
+
+        - id: user-service-openapi
+          uri: ${USER_SERVICE_URL:http://user.jagalchi.local:8081}
+          predicates:
+            - Path=/docs/user/v3/api-docs
           filters:
-            - RewritePath=/users/(?<segment>.*), /$\{segment}
+            - SetPath=/v3/api-docs
 
         # Node Service Routes (REST APIs)
         - id: node-service-rest
@@ -29,6 +36,13 @@ spring:
             - Path=/node/**
           filters:
             - RewritePath=/node/(?<segment>.*), /$\{segment}
+
+        - id: node-service-openapi
+          uri: ${NODE_SERVICE_URL:http://node.jagalchi.local:8082}
+          predicates:
+            - Path=/docs/node/v3/api-docs
+          filters:
+            - SetPath=/v3/api-docs
 
         # Node Service Routes (WebSocket)
         - id: node-service-websocket
@@ -45,8 +59,6 @@ spring:
             allowedOrigins:
               - "http://localhost:3000"  # frontend origin (local dev) - leave as-is
               - "http://localhost:5173"
-              - "https://jagalchi.dev"
-              - "https://www.jagalchi.dev"
             allowedMethods:
               - GET
               - POST
@@ -84,3 +96,12 @@ logging:
     root: INFO
     gajeman.jagalchi: INFO
     org.springframework.cloud.gateway: DEBUG
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: user-service
+        url: /docs/user/v3/api-docs
+      - name: node-service
+        url: /docs/node/v3/api-docs
