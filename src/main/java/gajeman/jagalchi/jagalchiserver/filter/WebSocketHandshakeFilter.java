@@ -4,7 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -26,9 +27,10 @@ import java.time.Instant;
  * - Upgrade: websocket 요청에 대해 Authorization 헤더를 파싱하여
  *   X-User-ID, X-User-Role, X-Permissions, X-Roadmap-ID를 주입
  */
-@Slf4j
 @Component
 public class WebSocketHandshakeFilter implements GlobalFilter, Ordered {
+
+    private static final Logger log = LoggerFactory.getLogger(WebSocketHandshakeFilter.class);
 
     @Value("${jwt.secret}")
     private String jwtSecret;
